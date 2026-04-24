@@ -7,7 +7,7 @@ export default function Settings() {
   return (
     <div className="container py-8 max-w-2xl">
       <PageHeader title={t("common.settings")} desc="" />
-      <div className="rounded-2xl bg-gradient-card border border-border p-6 space-y-6">
+      <div className="paper-card rounded-2xl p-6 space-y-6">
         <div className="flex items-center justify-between">
           <div>
             <p className="font-medium">Language</p>
