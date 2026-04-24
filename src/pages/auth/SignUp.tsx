@@ -100,7 +100,7 @@ export default function SignUp() {
               <Label htmlFor="password">{t("auth.password")}</Label>
               <Input id="password" type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} />
             </div>
-            <Button type="submit" disabled={loading} className="w-full bg-gradient-primary text-primary-foreground hover:opacity-90 shadow-glow-primary h-11">
+            <Button type="submit" disabled={loading} className="w-full bg-primary text-primary-foreground hover:bg-primary-soft rounded-full h-11">
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : t("cta.signup")}
             </Button>
           </form>
@@ -126,7 +126,7 @@ export default function SignUp() {
               </InputOTPGroup>
             </InputOTP>
           </div>
-          <Button type="submit" disabled={loading || code.length !== 6} className="w-full bg-gradient-primary text-primary-foreground hover:opacity-90 shadow-glow-primary h-11">
+          <Button type="submit" disabled={loading || code.length !== 6} className="w-full bg-primary text-primary-foreground hover:bg-primary-soft rounded-full h-11">
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : t("auth.code.verify")}
           </Button>
           <p className="text-center text-xs text-muted-foreground">

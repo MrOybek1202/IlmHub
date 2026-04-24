@@ -67,7 +67,7 @@ export default function SignIn() {
           </div>
           <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
         </div>
-        <Button type="submit" disabled={loading} className="w-full bg-gradient-primary text-primary-foreground hover:opacity-90 shadow-glow-primary h-11">
+        <Button type="submit" disabled={loading} className="w-full bg-primary text-primary-foreground hover:bg-primary-soft rounded-full h-11">
           {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : t("cta.login")}
         </Button>
       </form>
