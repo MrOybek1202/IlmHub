@@ -15,18 +15,18 @@ export function LangSwitcher() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground hover:text-foreground">
+        <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground hover:text-foreground hover:bg-surface-2 rounded-full">
           <Globe className="h-4 w-4" />
-          <span className="hidden sm:inline">{current?.flag} {lang.toUpperCase()}</span>
+          <span className="hidden sm:inline">{lang.toUpperCase()}</span>
           <span className="sm:hidden">{current?.flag}</span>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="glass-strong">
+      <DropdownMenuContent align="end" className="bg-card border-border shadow-lg">
         {LANGS.map((l) => (
           <DropdownMenuItem
             key={l.code}
             onClick={() => setLang(l.code as Lang)}
-            className={lang === l.code ? "bg-primary/10 text-primary" : ""}
+            className={lang === l.code ? "bg-surface-2 text-foreground font-medium" : ""}
           >
             <span className="mr-2">{l.flag}</span>
             {l.label}
