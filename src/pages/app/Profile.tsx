@@ -2,7 +2,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/lib/i18n/I18nProvider";
 import { PageHeader } from "./Subjects";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { Flame, Trophy, Zap } from "lucide-react";
 
 export default function Profile() {
@@ -14,38 +13,38 @@ export default function Profile() {
     <div className="container py-8 max-w-3xl">
       <PageHeader title={t("common.profile")} desc={user?.email || ""} />
 
-      <div className="rounded-2xl bg-gradient-card border border-border p-8">
+      <div className="paper-card rounded-2xl p-8">
         <div className="flex items-center gap-6 mb-8">
-          <Avatar className="h-24 w-24 ring-2 ring-primary/30">
-            <AvatarFallback className="bg-gradient-primary text-primary-foreground text-2xl font-bold">
+          <Avatar className="h-20 w-20 ring-1 ring-border">
+            <AvatarFallback className="bg-primary text-primary-foreground text-xl font-semibold">
               {initials}
             </AvatarFallback>
           </Avatar>
           <div>
-            <h2 className="font-display text-2xl font-bold">{user?.name}</h2>
-            <p className="text-muted-foreground">{user?.email}</p>
-            <div className="flex gap-2 mt-2">
-              <Badge variant="outline" className="border-primary/40 text-primary">Grade {user?.grade}</Badge>
-              <Badge variant="outline" className="border-secondary/40 text-secondary">{user?.goal}</Badge>
+            <h2 className="font-serif text-2xl font-semibold">{user?.name}</h2>
+            <p className="text-muted-foreground text-sm">{user?.email}</p>
+            <div className="flex gap-2 mt-3">
+              <span className="pill">Grade {user?.grade}</span>
+              <span className="pill">{user?.goal}</span>
             </div>
           </div>
         </div>
 
         <div className="grid grid-cols-3 gap-4">
-          <Stat icon={Flame} label={t("dash.streak")} value={user?.streak ?? 0} color="text-accent" />
-          <Stat icon={Trophy} label={t("dash.level")} value={user?.level ?? 1} color="text-warning" />
-          <Stat icon={Zap} label={t("dash.xp")} value={user?.xp ?? 0} color="text-primary" />
+          <Stat icon={Flame} label={t("dash.streak")} value={user?.streak ?? 0} />
+          <Stat icon={Trophy} label={t("dash.level")} value={user?.level ?? 1} />
+          <Stat icon={Zap} label={t("dash.xp")} value={user?.xp ?? 0} />
         </div>
       </div>
     </div>
   );
 }
 
-function Stat({ icon: Icon, label, value, color }: any) {
+function Stat({ icon: Icon, label, value }: any) {
   return (
     <div className="rounded-xl bg-surface-2 p-5 text-center">
-      <Icon className={`h-6 w-6 ${color} mx-auto mb-2`} />
-      <div className="font-display text-2xl font-bold">{value}</div>
+      <Icon className="h-5 w-5 text-muted-foreground mx-auto mb-2" />
+      <div className="font-serif text-2xl font-semibold">{value}</div>
       <div className="text-xs text-muted-foreground mt-1">{label}</div>
     </div>
   );

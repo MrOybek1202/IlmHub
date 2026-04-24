@@ -65,7 +65,7 @@ export default function ResetPassword() {
             <Label htmlFor="email">{t("auth.email")}</Label>
             <Input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
           </div>
-          <Button type="submit" disabled={loading} className="w-full bg-gradient-primary text-primary-foreground hover:opacity-90 shadow-glow-primary h-11">
+          <Button type="submit" disabled={loading} className="w-full bg-primary text-primary-foreground hover:bg-primary-soft rounded-full h-11">
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : t("common.next")}
           </Button>
         </form>
@@ -84,7 +84,7 @@ export default function ResetPassword() {
             <Label htmlFor="np">{t("auth.password")}</Label>
             <Input id="np" type="password" required minLength={6} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
           </div>
-          <Button type="submit" disabled={loading || code.length !== 6} className="w-full bg-gradient-primary text-primary-foreground hover:opacity-90 shadow-glow-primary h-11">
+          <Button type="submit" disabled={loading || code.length !== 6} className="w-full bg-primary text-primary-foreground hover:bg-primary-soft rounded-full h-11">
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : t("auth.code.verify")}
           </Button>
           <p className="text-center text-xs text-muted-foreground">(mock: 123456)</p>
