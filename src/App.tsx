@@ -15,6 +15,7 @@ import ResetPassword from "./pages/auth/ResetPassword";
 import Onboarding from "./pages/Onboarding";
 import Dashboard from "./pages/app/Dashboard";
 import Subjects from "./pages/app/Subjects";
+import SubjectDetail from "./pages/app/SubjectDetail";
 import Lab from "./pages/app/Lab";
 import Books from "./pages/app/Books";
 import Games from "./pages/app/Games";
@@ -45,6 +46,7 @@ const App = () => (
                 <Route path="/app" element={<AppLayout />}>
                   <Route index element={<Dashboard />} />
                   <Route path="subjects" element={<Subjects />} />
+                  <Route path="subjects/:subjectId" element={<SubjectDetail />} />
                   <Route path="lab" element={<Lab />} />
                   <Route path="books" element={<Books />} />
                   <Route path="games" element={<Games />} />

@@ -1,39 +1,111 @@
+import { useMemo } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { useI18n } from "@/lib/i18n/I18nProvider";
 import { PageHeader } from "./Subjects";
+import { getSubjectById, labItems, localize, subjects } from "@/lib/content";
 import { Button } from "@/components/ui/button";
-import { Atom, FlaskConical, Magnet, Play, Waves, Zap } from "lucide-react";
-
-const SIMS = [
-  { id: 1, titleKey: "lab.forces", tagKey: "dash.subject.physics", icon: Zap, color: "physics" },
-  { id: 2, titleKey: "lab.magnets", tagKey: "dash.subject.physics", icon: Magnet, color: "physics" },
-  { id: 3, titleKey: "lab.molecule", tagKey: "dash.subject.chemistry", icon: Atom, color: "chem" },
-  { id: 4, titleKey: "lab.reactions", tagKey: "dash.subject.chemistry", icon: FlaskConical, color: "chem" },
-  { id: 5, titleKey: "lab.wave", tagKey: "dash.subject.physics", icon: Waves, color: "physics" },
-  { id: 6, titleKey: "lab.circuit", tagKey: "dash.subject.physics", icon: Zap, color: "physics" },
-];
+import { Input } from "@/components/ui/input";
 
 export default function Lab() {
-  const { t } = useI18n();
+  const { lang, t } = useI18n();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const subjectParam = searchParams.get("subject") ?? "all";
+  const levelParam = searchParams.get("level") ?? "all";
+  const query = searchParams.get("q") ?? "";
+
+  const filtered = useMemo(() => {
+    return labItems.filter((item) => {
+      const subjectMatch = subjectParam === "all" || item.subjectId === subjectParam;
+      const levelMatch = levelParam === "all" || item.level === levelParam;
+      const queryMatch =
+        !query ||
+        localize(item.title, lang).toLowerCase().includes(query.toLowerCase()) ||
+        localize(item.description, lang).toLowerCase().includes(query.toLowerCase());
+      return subjectMatch && levelMatch && queryMatch;
+    });
+  }, [lang, levelParam, query, subjectParam]);
+
+  const selectedSubject = getSubjectById(subjectParam);
 
   return (
     <div className="container py-8">
-      <PageHeader title={t("lab.title")} desc={t("lab.desc")} />
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-        {SIMS.map((s, i) => (
-          <div key={s.id} className="group paper-card paper-card-hover rounded-2xl overflow-hidden animate-slide-up" style={{ animationDelay: `${i * 60}ms` }}>
-            <div className={`relative h-40 bg-subject-${s.color}-tint flex items-center justify-center`}>
-              <s.icon className={`h-14 w-14 text-subject-${s.color}`} />
-            </div>
+      <PageHeader
+        title={t("lab.title")}
+        desc={selectedSubject ? `${localize(selectedSubject.name, lang)}: ${localize(selectedSubject.shortDescription, lang)}` : t("lab.desc")}
+      />
+
+      <div className="paper-card rounded-[28px] p-5 mb-6 grid gap-4 lg:grid-cols-[1.2fr_0.8fr_0.8fr]">
+        <Input
+          value={query}
+          onChange={(event) => setSearchParams((current) => {
+            const next = new URLSearchParams(current);
+            if (event.target.value) next.set("q", event.target.value);
+            else next.delete("q");
+            return next;
+          })}
+          placeholder={t("common.search.placeholder")}
+          className="rounded-2xl"
+        />
+
+        <select
+          value={subjectParam}
+          onChange={(event) => setSearchParams((current) => {
+            const next = new URLSearchParams(current);
+            if (event.target.value === "all") next.delete("subject");
+            else next.set("subject", event.target.value);
+            return next;
+          })}
+          className="h-11 rounded-2xl border border-border bg-background px-4"
+        >
+          <option value="all">{t("common.filter.subject")}: {t("common.filter.all")}</option>
+          {subjects.map((subject) => (
+            <option key={subject.id} value={subject.id}>{localize(subject.name, lang)}</option>
+          ))}
+        </select>
+
+        <select
+          value={levelParam}
+          onChange={(event) => setSearchParams((current) => {
+            const next = new URLSearchParams(current);
+            if (event.target.value === "all") next.delete("level");
+            else next.set("level", event.target.value);
+            return next;
+          })}
+          className="h-11 rounded-2xl border border-border bg-background px-4"
+        >
+          <option value="all">{t("common.filter.level")}: {t("common.filter.all")}</option>
+          <option value="starter">{t("common.filter.starter")}</option>
+          <option value="intermediate">{t("common.filter.intermediate")}</option>
+          <option value="advanced">{t("common.filter.advanced")}</option>
+        </select>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+        {filtered.map((item) => (
+          <div key={item.id} className="paper-card rounded-[28px] overflow-hidden">
+            <div className={`h-32 bg-subject-${item.color}-tint`} />
             <div className="p-5">
-              <span className="text-xs font-mono text-muted-foreground uppercase tracking-wider">{t(s.tagKey)}</span>
-              <h3 className="font-serif text-lg font-semibold mt-1 mb-4">{t(s.titleKey)}</h3>
-              <Button size="sm" className="w-full rounded-full bg-primary text-primary-foreground hover:bg-primary-soft">
-                <Play className="h-4 w-4 mr-2" /> {t("lab.run")}
-              </Button>
+              <div className="flex items-center justify-between gap-3 mb-3">
+                <span className="pill">{localize(getSubjectById(item.subjectId)!.name, lang)}</span>
+                <span className="text-xs text-muted-foreground">{t(`common.filter.${item.level}`)}</span>
+              </div>
+              <h3 className="font-serif text-xl mb-2">{localize(item.title, lang)}</h3>
+              <p className="text-sm text-muted-foreground mb-4">{localize(item.description, lang)}</p>
+              <div className="text-xs text-muted-foreground mb-4">{t("lab.providerLabel")}: {item.provider}</div>
+              <div className="flex gap-3">
+                <Button asChild className="rounded-full flex-1">
+                  <a href={item.url} target="_blank" rel="noreferrer">{t("lab.run")}</a>
+                </Button>
+                <Button asChild variant="outline" className="rounded-full">
+                  <Link to={`/app/subjects/${item.subjectId}`}>{t("subj.openTrack")}</Link>
+                </Button>
+              </div>
             </div>
           </div>
         ))}
       </div>
+
+      {filtered.length === 0 ? <div className="text-center text-muted-foreground py-16">{t("common.empty")}</div> : null}
     </div>
   );
 }
