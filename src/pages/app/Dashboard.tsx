@@ -8,6 +8,7 @@ import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxi
 export default function Dashboard() {
   const { user } = useAuth();
   const { lang, t } = useI18n();
+  const firstName = user?.firstName || "Student";
 
   const radarData = dashboardSubjectProgress.map((item) => ({
     subject: localize(getSubjectById(item.id)!.name, lang),
@@ -22,7 +23,7 @@ export default function Dashboard() {
         <div className="paper-card rounded-[32px] p-7">
           <span className="pill mb-3">{t("dash.analytics")}</span>
           <h1 className="font-serif text-4xl mb-2">
-            {t("dash.welcome")}, <span className="italic text-primary-soft">{user?.name?.split(" ")[0]}</span>
+            {t("dash.welcome")}, <span className="italic text-primary-soft">{firstName}</span>
           </h1>
           <p className="text-muted-foreground mb-6">{t("dash.analytics.desc")}</p>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

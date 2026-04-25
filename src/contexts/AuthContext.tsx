@@ -5,10 +5,11 @@ interface AuthCtx {
   user: User | null;
   loading: boolean;
   signin: (email: string, password: string) => Promise<User>;
-  signup: (email: string, password: string, name: string) => Promise<User>;
+  signup: (email: string, password: string, firstName: string, lastName: string) => Promise<User>;
   signinGoogle: (idToken: string) => Promise<User>;
   signout: () => void;
   updateUser: (patch: Partial<User>) => Promise<User>;
+  updateProgress: (subjectId: string, progress: number) => Promise<User>;
   refresh: () => Promise<void>;
 }
 
@@ -43,8 +44,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(r.user);
       return r.user;
     },
-    async signup(email, password, name) {
-      const r = await api.signup(email, password, name);
+    async signup(email, password, firstName, lastName) {
+      const r = await api.signup(email, password, firstName, lastName);
       setUser(r.user);
       return r.user;
     },
@@ -59,6 +60,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
     async updateUser(patch) {
       const u = await api.updateProfile(patch);
+      setUser(u);
+      return u;
+    },
+    async updateProgress(subjectId, progress) {
+      const u = await api.updateProgress(subjectId, progress);
       setUser(u);
       return u;
     },

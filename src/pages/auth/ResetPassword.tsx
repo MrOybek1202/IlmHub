@@ -26,7 +26,7 @@ export default function ResetPassword() {
     e.preventDefault();
     setLoading(true);
     try {
-      await api.sendCode(email);
+      await api.sendCode(email, 'reset');
       setStep("code");
       toast({ title: t("toast.success"), description: t("auth.code.sent") });
     } catch (err: any) {

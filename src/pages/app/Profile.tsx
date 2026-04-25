@@ -1,16 +1,74 @@
+import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/lib/i18n/I18nProvider";
 import { activityData, getSubjectById, localize } from "@/lib/content";
 import { PageHeader } from "./Subjects";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
+import { Camera, Edit2, X, Check } from "lucide-react";
 
 export default function Profile() {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const { t, lang } = useI18n();
-  const initials = user?.name?.split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase() || "U";
+  const { toast } = useToast();
+  const [firstName, setFirstName] = useState(user?.firstName || "");
+  const [lastName, setLastName] = useState(user?.lastName || "");
+  const [avatarUrl, setAvatarUrl] = useState(user?.avatarUrl || "");
+  const [saving, setSaving] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  
+  const displayName = user?.name || user?.email || "User";
+  const initials = displayName.split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase() || "U";
   const favoriteSubject = getSubjectById("physics");
   const monthLabels = t("profile.activityMonths").split(",");
   const dayLabels = t("profile.activityDays").split(",");
+
+  useEffect(() => {
+    setFirstName(user?.firstName || "");
+    setLastName(user?.lastName || "");
+    setAvatarUrl(user?.avatarUrl || "");
+  }, [user?.firstName, user?.lastName, user?.avatarUrl, user?.name]);
+
+  async function onSaveProfile(e: React.FormEvent) {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      await updateUser({
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        avatarUrl: avatarUrl.trim(),
+      });
+      toast({ title: t("toast.success"), description: t("profile.saveSuccess") });
+      setIsEditing(false);
+    } catch (err: any) {
+      toast({ title: t("toast.error"), description: err.message, variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        toast({
+          title: t("toast.error"),
+          description: "Rasm hajmi 2MB dan oshmasligi kerak",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAvatarUrl(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   return (
     <div className="container py-8 space-y-6">
@@ -19,12 +77,13 @@ export default function Profile() {
       <section className="paper-card rounded-[32px] p-7">
         <div className="flex flex-col lg:flex-row lg:items-center gap-6">
           <Avatar className="h-24 w-24 ring-1 ring-border">
+            {user?.avatarUrl ? <AvatarImage src={user.avatarUrl} alt={displayName} /> : null}
             <AvatarFallback className="bg-primary text-primary-foreground text-2xl font-semibold">
               {initials}
             </AvatarFallback>
           </Avatar>
           <div className="flex-1">
-            <h2 className="font-serif text-3xl mb-2">{user?.name}</h2>
+            <h2 className="font-serif text-3xl mb-2">{displayName}</h2>
             <div className="flex flex-wrap gap-2">
               {user?.grade ? <span className="pill">{t("profile.grade")} {user.grade}</span> : null}
               {user?.goal ? <span className="pill">{t(`goal.${user.goal}`)}</span> : null}
@@ -49,6 +108,122 @@ export default function Profile() {
         </div>
 
         <div className="space-y-6">
+          <div className="paper-card rounded-[32px] p-6 relative overflow-hidden">
+            <div className="flex justify-between items-start mb-6">
+              <div>
+                <h3 className="font-serif text-2xl">{isEditing ? t("profile.edit") : t("common.profile")}</h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {isEditing ? t("profile.editDesc") : t("profile.viewDesc")}
+                </p>
+              </div>
+              {!isEditing && (
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setIsEditing(true)}
+                  className="rounded-full gap-2"
+                >
+                  <Edit2 className="h-4 w-4" />
+                  {t("common.edit")}
+                </Button>
+              )}
+            </div>
+
+            {isEditing ? (
+              <form onSubmit={onSaveProfile} className="space-y-6">
+                <div className="flex flex-col items-center gap-4 mb-2">
+                  <div className="relative group">
+                    <Avatar className="h-24 w-24 ring-4 ring-background shadow-xl">
+                      {avatarUrl ? <AvatarImage src={avatarUrl} alt={displayName} /> : null}
+                      <AvatarFallback className="bg-primary text-primary-foreground text-2xl font-semibold">
+                        {initials}
+                      </AvatarFallback>
+                    </Avatar>
+                    <label 
+                      htmlFor="avatar-upload" 
+                      className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                    >
+                      <Camera className="text-white h-8 w-8" />
+                      <input 
+                        id="avatar-upload" 
+                        type="file" 
+                        accept="image/*" 
+                        className="hidden" 
+                        onChange={handleFileChange} 
+                      />
+                    </label>
+                  </div>
+                  <p className="text-xs text-muted-foreground">{t("profile.changeAvatar")}</p>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="profile-first-name">{t("profile.firstName")}</Label>
+                    <Input
+                      id="profile-first-name"
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      placeholder={t("auth.firstName.placeholder")}
+                      className="rounded-xl"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="profile-last-name">{t("profile.lastName")}</Label>
+                    <Input
+                      id="profile-last-name"
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      placeholder={t("auth.lastName.placeholder")}
+                      className="rounded-xl"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex gap-3 pt-2">
+                  <Button type="submit" disabled={saving} className="flex-1 rounded-xl gap-2">
+                    {saving ? t("common.saving") : (
+                      <>
+                        <Check className="h-4 w-4" />
+                        {t("common.save")}
+                      </>
+                    )}
+                  </Button>
+                  <Button 
+                    type="button" 
+                    variant="ghost" 
+                    onClick={() => {
+                      setIsEditing(false);
+                      setFirstName(user?.firstName || "");
+                      setLastName(user?.lastName || "");
+                      setAvatarUrl(user?.avatarUrl || "");
+                    }} 
+                    className="flex-1 rounded-xl gap-2"
+                  >
+                    <X className="h-4 w-4" />
+                    {t("common.cancel")}
+                  </Button>
+                </div>
+              </form>
+            ) : (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="p-4 rounded-2xl bg-surface-2">
+                    <p className="text-xs text-muted-foreground mb-1">{t("profile.firstName")}</p>
+                    <p className="font-medium">{user?.firstName || "-"}</p>
+                  </div>
+                  <div className="p-4 rounded-2xl bg-surface-2">
+                    <p className="text-xs text-muted-foreground mb-1">{t("profile.lastName")}</p>
+                    <p className="font-medium">{user?.lastName || "-"}</p>
+                  </div>
+                </div>
+                <div className="p-4 rounded-2xl bg-surface-2">
+                  <p className="text-xs text-muted-foreground mb-1">{t("auth.email")}</p>
+                  <p className="font-medium">{user?.email || "-"}</p>
+                </div>
+              </div>
+            )}
+          </div>
+
           <div className="paper-card rounded-[32px] p-6">
             <h3 className="font-serif text-2xl mb-4">{t("profile.preferences")}</h3>
             <div className="space-y-3 text-sm">

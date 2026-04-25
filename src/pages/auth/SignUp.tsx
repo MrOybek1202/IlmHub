@@ -19,7 +19,8 @@ export default function SignUp() {
   const { toast } = useToast();
 
   const [step, setStep] = useState<"form" | "verify">("form");
-  const [name, setName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [code, setCode] = useState("");
@@ -47,7 +48,7 @@ export default function SignUp() {
     try {
       const r = await api.verifyCode(email, code);
       if (!r.ok) throw new Error(t("auth.invalidCode"));
-      await signup(email, password, name);
+      await signup(email, password, firstName.trim(), lastName.trim());
       navigate("/onboarding");
     } catch (err: any) {
       toast({ title: t("toast.error"), description: err.message, variant: "destructive" });
@@ -99,9 +100,27 @@ export default function SignUp() {
       {step === "form" ? (
         <>
           <form onSubmit={onSubmitForm} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">{t("auth.name")}</Label>
-              <Input id="name" required value={name} onChange={(e) => setName(e.target.value)} placeholder={t("auth.name.placeholder")} />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="firstName">{t("auth.firstName")}</Label>
+                <Input
+                  id="firstName"
+                  required
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  placeholder={t("auth.firstName.placeholder")}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="lastName">{t("auth.lastName")}</Label>
+                <Input
+                  id="lastName"
+                  required
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  placeholder={t("auth.lastName.placeholder")}
+                />
+              </div>
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">{t("auth.email")}</Label>

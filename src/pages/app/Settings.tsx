@@ -5,15 +5,54 @@ import { LangSwitcher } from "@/components/LangSwitcher";
 import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
+import { api } from "@/lib/api";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Settings() {
   const { t } = useI18n();
   const { user } = useAuth();
+  const { toast } = useToast();
   const [emailReminders, setEmailReminders] = useState(true);
   const [weeklyReport, setWeeklyReport] = useState(true);
   const [publicProfile, setPublicProfile] = useState(false);
   const [youtubeSync, setYoutubeSync] = useState(true);
   const [driveSync, setDriveSync] = useState(false);
+  const [code, setCode] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [sendingCode, setSendingCode] = useState(false);
+  const [resettingPassword, setResettingPassword] = useState(false);
+
+  async function onSendCode() {
+    if (!user?.email) return;
+    setSendingCode(true);
+    try {
+      await api.sendCode(user.email, 'reset');
+      toast({ title: t("toast.success"), description: t("settings.resetCodeSent") });
+    } catch (err: any) {
+      toast({ title: t("toast.error"), description: err.message, variant: "destructive" });
+    } finally {
+      setSendingCode(false);
+    }
+  }
+
+  async function onResetPassword(e: React.FormEvent) {
+    e.preventDefault();
+    if (!user?.email) return;
+    setResettingPassword(true);
+    try {
+      await api.resetPassword(user.email, code, newPassword);
+      setCode("");
+      setNewPassword("");
+      toast({ title: t("toast.success"), description: t("auth.reset.success") });
+    } catch (err: any) {
+      toast({ title: t("toast.error"), description: err.message, variant: "destructive" });
+    } finally {
+      setResettingPassword(false);
+    }
+  }
 
   return (
     <div className="container py-8 space-y-6">
@@ -46,6 +85,42 @@ export default function Settings() {
           <div className="rounded-2xl bg-surface-2 px-4 py-3 text-sm">19:00</div>
           <div className="rounded-2xl bg-surface-2 px-4 py-3 text-sm">45/10</div>
           <Button className="rounded-full w-fit">{t("common.save")}</Button>
+        </SettingsCard>
+
+        <SettingsCard title={t("settings.security")}>
+          <form onSubmit={onResetPassword} className="space-y-4">
+            <div className="rounded-2xl bg-surface-2 px-4 py-3 text-sm text-muted-foreground">
+              {t("settings.passwordHelp")}
+            </div>
+            <Button type="button" onClick={onSendCode} disabled={sendingCode || !user?.email} className="rounded-full w-fit">
+              {t("settings.sendResetCode")}
+            </Button>
+            <div className="space-y-2">
+              <Label>{t("auth.reset.codeLabel")}</Label>
+              <div className="flex justify-start">
+                <InputOTP maxLength={6} value={code} onChange={setCode}>
+                  <InputOTPGroup>
+                    {[0, 1, 2, 3, 4, 5].map((i) => (
+                      <InputOTPSlot key={i} index={i} className="h-11 w-11 text-base border-border bg-surface-2" />
+                    ))}
+                  </InputOTPGroup>
+                </InputOTP>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="new-password">{t("auth.reset.newPassword")}</Label>
+              <Input
+                id="new-password"
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder={t("settings.passwordPlaceholder")}
+              />
+            </div>
+            <Button type="submit" disabled={resettingPassword || code.length !== 6 || !newPassword} className="rounded-full w-fit">
+              {t("auth.reset.changePassword")}
+            </Button>
+          </form>
         </SettingsCard>
 
         <SettingsCard title={t("settings.privacy")}>

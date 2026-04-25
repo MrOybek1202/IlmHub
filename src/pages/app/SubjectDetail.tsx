@@ -1,5 +1,6 @@
 import { Link, Navigate, useParams } from "react-router-dom";
 import { useI18n } from "@/lib/i18n/I18nProvider";
+import { useAuth } from "@/contexts/AuthContext";
 import { getSubjectById, localize } from "@/lib/content";
 import { PageHeader } from "./Subjects";
 import { ArrowRight, BookOpen, FlaskConical, PlayCircle } from "lucide-react";
@@ -7,7 +8,9 @@ import { ArrowRight, BookOpen, FlaskConical, PlayCircle } from "lucide-react";
 export default function SubjectDetail() {
   const { subjectId } = useParams();
   const { lang, t } = useI18n();
+  const { user } = useAuth();
   const subject = getSubjectById(subjectId);
+  const progress = (subjectId && user?.subjectProgress?.[subjectId]) || 0;
   const resourceTypeLabel = {
     video: { uz: "Video", ru: "Видео", en: "Video" },
     lesson: { uz: "Dars", ru: "Урок", en: "Lesson" },
@@ -26,7 +29,7 @@ export default function SubjectDetail() {
           <div className="max-w-2xl">
             <div className="flex flex-wrap gap-2 mb-4">
               <span className="pill">{t("subj.gradeRange")}: {subject.gradeRange}</span>
-              <span className="pill">{t("common.progress")}: {subject.progress}%</span>
+              <span className="pill">{t("common.progress")}: {progress}%</span>
               <span className="pill">{subject.heroStat} {t("subj.lessons")}</span>
             </div>
             <h2 className="font-serif text-2xl mb-3">{t("subj.skillFocus")}</h2>

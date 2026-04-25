@@ -1,11 +1,5 @@
 /**
  * API client for ILM Hub.
- *
- * The frontend never talks to MongoDB directly (browser cannot, and it would
- * leak your connection string). Point VITE_API_URL to your Node/Express
- * backend that owns the Mongo connection. Until that backend is live,
- * requests fall back to the in-memory mock implementation below so the
- * whole UI is fully usable for design/demo.
  */
 
 // Use empty string so requests are relative (e.g. /api/auth/...) and go through Vite proxy
@@ -15,6 +9,8 @@ const USE_BACKEND = true;
 export interface User {
   id: string;
   email: string;
+  firstName: string;
+  lastName: string;
   name: string;
   avatarUrl?: string;
   grade?: number;
@@ -22,6 +18,7 @@ export interface User {
   xp: number;
   level: number;
   streak: number;
+  subjectProgress?: Record<string, number>;
   createdAt: string;
 }
 
@@ -47,13 +44,19 @@ function saveMockUser(u: User | null) {
 }
 
 function makeMockUser(email: string, name?: string): User {
+  const parts = (name || email.split("@")[0]).split(" ");
+  const firstName = parts[0] || "User";
+  const lastName = parts.slice(1).join(" ");
   return {
     id: crypto.randomUUID(),
     email,
-    name: name || email.split("@")[0],
+    firstName,
+    lastName,
+    name: [firstName, lastName].filter(Boolean).join(" "),
     xp: 1240,
     level: 4,
     streak: 7,
+    subjectProgress: {},
     createdAt: new Date().toISOString(),
   };
 }
@@ -104,7 +107,8 @@ export const api = {
     return { user, token };
   },
 
-  async signup(email: string, _password: string, name: string): Promise<AuthResult> {
+  async signup(email: string, _password: string, firstName: string, lastName: string = ""): Promise<AuthResult> {
+    const name = `${firstName} ${lastName}`.trim();
     if (USE_BACKEND) {
       const res = await http<AuthResult>("/api/auth/signup", {
         method: "POST",
@@ -121,11 +125,11 @@ export const api = {
     return { user, token };
   },
 
-  async google(idToken: string): Promise<AuthResult> {
+  async google(token: string): Promise<AuthResult> {
     if (USE_BACKEND) {
       const res = await http<AuthResult>("/api/auth/google", {
         method: "POST",
-        body: JSON.stringify({ idToken }),
+        body: JSON.stringify({ idToken: token, accessToken: token }),
       });
       saveMockUser(res.user);
       localStorage.setItem(TOKEN_KEY, res.token);
@@ -137,12 +141,12 @@ export const api = {
     return { user, token: "mock-token" };
   },
 
-  async sendCode(email: string): Promise<{ ok: true }> {
+  async sendCode(email: string, type: 'signup' | 'reset' = 'signup'): Promise<{ ok: true }> {
     if (USE_BACKEND) return http("/api/auth/send-code", {
       method: "POST",
-      body: JSON.stringify({ email }),
+      body: JSON.stringify({ email, type }),
     });
-    console.info("[mock] verification code is mock for", email);
+    console.info("[mock] verification code is mock for", email, type);
     return { ok: true };
   },
 
@@ -164,16 +168,51 @@ export const api = {
 
   // ---------------- Profile ----------------
   async me(): Promise<User | null> {
-    // Bypassing backend for profile per user request
-    return loadMockUser();
+    if (USE_BACKEND) {
+      const token = localStorage.getItem(TOKEN_KEY);
+      if (!token) return null;
+      try {
+        const user = await http<User>("/api/users/me");
+        saveMockUser(user);
+        return user;
+      } catch {
+        localStorage.removeItem(TOKEN_KEY);
+        saveMockUser(null);
+        return null;
+      }
+    }
     return loadMockUser();
   },
 
   async updateProfile(patch: Partial<User>): Promise<User> {
-    // Bypassing backend for profile per user request
+    if (USE_BACKEND) {
+      const next = await http<User>("/api/users/me", {
+        method: "PATCH",
+        body: JSON.stringify(patch),
+      });
+      saveMockUser(next);
+      return next;
+    }
     const current = loadMockUser();
     if (!current) throw new Error("Not authenticated");
     const next = { ...current, ...patch };
+    saveMockUser(next);
+    return next;
+  },
+
+  async updateProgress(subjectId: string, progress: number): Promise<User> {
+    if (USE_BACKEND) {
+      const next = await http<User>("/api/users/progress", {
+        method: "POST",
+        body: JSON.stringify({ subjectId, progress }),
+      });
+      saveMockUser(next);
+      return next;
+    }
+    const current = loadMockUser();
+    if (!current) throw new Error("Not authenticated");
+    const subjectProgress = { ...(current.subjectProgress || {}), [subjectId]: progress };
+    const next = { ...current, subjectProgress };
     saveMockUser(next);
     return next;
   },

@@ -12,7 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export function Header() {
   const { t } = useI18n();
@@ -28,7 +28,8 @@ export function Header() {
     { to: "/app/virtual", label: t("nav.virtual"), icon: Atom },
   ];
 
-  const initials = user?.name?.split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase() || "U";
+  const displayName = user?.name || user?.email || "User";
+  const initials = displayName.split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase() || "U";
   const goalLabel = user?.goal ? t(`goal.${user.goal}`) : "";
 
   return (
@@ -67,6 +68,7 @@ export function Header() {
           <DropdownMenuTrigger asChild>
             <button type="button" className="flex items-center gap-2 group">
               <Avatar className="h-9 w-9 ring-1 ring-border group-hover:ring-primary/40 transition-all">
+                {user?.avatarUrl ? <AvatarImage src={user.avatarUrl} alt={displayName} /> : null}
                 <AvatarFallback className="bg-primary text-primary-foreground font-medium text-sm">
                   {initials}
                 </AvatarFallback>
@@ -76,7 +78,7 @@ export function Header() {
           <DropdownMenuContent align="end" className="w-56 bg-card border-border shadow-lg">
             <DropdownMenuLabel>
               <div className="flex flex-col">
-                <span className="text-sm font-medium">{user?.name}</span>
+                <span className="text-sm font-medium">{displayName}</span>
                 <span className="text-xs text-muted-foreground">{user?.email}</span>
               </div>
             </DropdownMenuLabel>
