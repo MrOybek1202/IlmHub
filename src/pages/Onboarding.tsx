@@ -28,7 +28,7 @@ export default function Onboarding() {
       await updateUser({ grade, goal });
       navigate("/app");
     } catch (err: any) {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
+      toast({ title: t("toast.error"), description: err.message, variant: "destructive" });
       setSaving(false);
     }
   }

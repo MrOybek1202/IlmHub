@@ -18,7 +18,7 @@ export function LangSwitcher() {
         <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground hover:text-foreground hover:bg-surface-2 rounded-full">
           <Globe className="h-4 w-4" />
           <span className="hidden sm:inline">{lang.toUpperCase()}</span>
-          <span className="sm:hidden">{current?.flag}</span>
+          <span className="sm:hidden">{current?.shortLabel}</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="bg-card border-border shadow-lg">
@@ -28,7 +28,7 @@ export function LangSwitcher() {
             onClick={() => setLang(l.code as Lang)}
             className={lang === l.code ? "bg-surface-2 text-foreground font-medium" : ""}
           >
-            <span className="mr-2">{l.flag}</span>
+            <span className="mr-2 text-xs font-semibold">{l.shortLabel}</span>
             {l.label}
           </DropdownMenuItem>
         ))}

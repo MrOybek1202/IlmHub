@@ -4,7 +4,6 @@ import { useI18n } from "@/lib/i18n/I18nProvider";
 import { useAuth } from "@/contexts/AuthContext";
 import { LangSwitcher } from "./LangSwitcher";
 import { Logo } from "./Logo";
-import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -30,13 +29,13 @@ export function Header() {
   ];
 
   const initials = user?.name?.split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase() || "U";
+  const goalLabel = user?.goal ? t(`goal.${user.goal}`) : "";
 
   return (
     <header className="sticky top-0 z-50 bg-background/85 backdrop-blur-md border-b border-border">
       <div className="container flex h-16 items-center gap-4">
         <Logo to="/app" />
 
-        {/* Desktop nav — pill-style segmented control */}
         <nav className="hidden lg:flex items-center gap-0.5 ml-6 p-1 rounded-full bg-surface-2/70">
           {nav.map((item) => (
             <NavLink
@@ -45,9 +44,7 @@ export function Header() {
               end={item.end}
               className={({ isActive }) =>
                 `flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-sm font-medium transition-all ${
-                  isActive
-                    ? "bg-primary text-primary-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
+                  isActive ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
                 }`
               }
             >
@@ -61,14 +58,14 @@ export function Header() {
 
         <LangSwitcher />
 
-        <Button variant="ghost" size="icon" className="relative text-muted-foreground hover:text-foreground hover:bg-surface-2">
+        <button type="button" className="relative inline-flex h-10 w-10 items-center justify-center rounded-full text-muted-foreground hover:text-foreground hover:bg-surface-2">
           <Bell className="h-5 w-5" />
           <span className="absolute top-2.5 right-2.5 h-2 w-2 rounded-full bg-accent" />
-        </Button>
+        </button>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="flex items-center gap-2 group">
+            <button type="button" className="flex items-center gap-2 group">
               <Avatar className="h-9 w-9 ring-1 ring-border group-hover:ring-primary/40 transition-all">
                 <AvatarFallback className="bg-primary text-primary-foreground font-medium text-sm">
                   {initials}
@@ -84,9 +81,10 @@ export function Header() {
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <div className="px-2 py-1.5 flex gap-2">
-              <span className="pill">Lvl {user?.level ?? 1}</span>
-              <span className="pill">🔥 {user?.streak ?? 0}</span>
+            <div className="px-2 py-1.5 flex flex-wrap gap-2">
+              <span className="pill">{t("common.levelShort")} {user?.level ?? 1}</span>
+              <span className="pill">{user?.streak ?? 0} {t("dash.streak")}</span>
+              {goalLabel ? <span className="pill">{goalLabel}</span> : null}
             </div>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => navigate("/app/profile")}>
@@ -96,17 +94,13 @@ export function Header() {
               <Settings className="h-4 w-4 mr-2" /> {t("common.settings")}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={() => { signout(); navigate("/"); }}
-              className="text-destructive focus:text-destructive"
-            >
+            <DropdownMenuItem onClick={() => { signout(); navigate("/"); }} className="text-destructive focus:text-destructive">
               <LogOut className="h-4 w-4 mr-2" /> {t("cta.logout")}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
 
-      {/* Mobile nav */}
       <nav className="lg:hidden border-t border-border overflow-x-auto">
         <div className="container flex items-center gap-1 py-2">
           {nav.map((item) => (

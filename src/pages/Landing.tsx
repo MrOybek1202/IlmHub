@@ -17,7 +17,6 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Top bar */}
       <header className="container flex h-16 items-center justify-between">
         <Logo />
         <div className="flex items-center gap-2">
@@ -33,7 +32,6 @@ export default function Landing() {
         </div>
       </header>
 
-      {/* Hero */}
       <section className="container pt-16 md:pt-24 pb-20">
         <div className="max-w-4xl mx-auto text-center">
           <span className="pill mb-6 animate-fade-in">
@@ -41,8 +39,7 @@ export default function Landing() {
           </span>
 
           <h1 className="font-serif text-5xl md:text-7xl font-semibold tracking-tight mb-6 animate-slide-up text-foreground">
-            {t("land.hero.title")}{" "}
-            <span className="italic text-primary-soft">{t("land.hero.title2")}</span>
+            {t("land.hero.title")} <span className="italic text-primary-soft">{t("land.hero.title2")}</span>
           </h1>
 
           <p className="max-w-2xl mx-auto text-lg text-muted-foreground mb-10 animate-slide-up [animation-delay:80ms]">
@@ -63,36 +60,34 @@ export default function Landing() {
           </div>
         </div>
 
-        {/* Hero visual — academic stack */}
         <div className="mt-20 max-w-5xl mx-auto grid grid-cols-3 gap-4 animate-fade-in [animation-delay:300ms]">
           <div className="paper-card rounded-2xl p-6 col-span-2 row-span-2 min-h-[260px]">
             <div className="flex items-center gap-2 text-xs text-muted-foreground font-mono mb-3">
-              <span className="h-2 w-2 rounded-full bg-success" /> 02:35 · {t("dash.continue")}
+              <span className="h-2 w-2 rounded-full bg-success" /> 02:35 • {t("dash.continue")}
             </div>
-            <h3 className="font-serif text-2xl mb-3">Kinematika — 2-dars</h3>
+            <h3 className="font-serif text-2xl mb-3">{t("land.hero.demoTitle")}</h3>
             <div className="h-2 w-full bg-surface-2 rounded-full overflow-hidden mb-2">
               <div className="h-full bg-primary rounded-full w-[35%]" />
             </div>
-            <p className="text-xs text-muted-foreground">35% · 12 daqiqa qoldi</p>
+            <p className="text-xs text-muted-foreground">35% • {t("land.hero.demoTimeLeft")}</p>
           </div>
           <div className="ink-card p-5 flex flex-col justify-between">
-            <span className="text-xs uppercase tracking-wider opacity-70">Streak</span>
+            <span className="text-xs uppercase tracking-wider opacity-70">{t("dash.streak")}</span>
             <div>
               <div className="font-serif text-4xl font-semibold">7</div>
-              <div className="text-xs opacity-70 mt-1">kun ketma-ket</div>
+              <div className="text-xs opacity-70 mt-1">{t("land.hero.streakLabel")}</div>
             </div>
           </div>
           <div className="paper-card rounded-2xl p-5 bg-accent/30 border-accent/40 flex flex-col justify-between">
             <span className="text-xs uppercase tracking-wider text-accent-foreground/70">XP</span>
             <div>
               <div className="font-serif text-4xl font-semibold text-accent-foreground">1,240</div>
-              <div className="text-xs text-accent-foreground/70 mt-1">+120 bugun</div>
+              <div className="text-xs text-accent-foreground/70 mt-1">{t("land.hero.todayXp")}</div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Features */}
       <section className="container py-20 border-t border-border">
         <h2 className="font-serif text-3xl md:text-4xl font-semibold text-center mb-3 tracking-tight">
           {t("land.features.title")}
@@ -101,11 +96,7 @@ export default function Landing() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
           {features.map((f, i) => (
-            <div
-              key={f.title}
-              className="paper-card paper-card-hover rounded-2xl p-6 animate-slide-up"
-              style={{ animationDelay: `${i * 80}ms` }}
-            >
+            <div key={f.title} className="paper-card paper-card-hover rounded-2xl p-6 animate-slide-up" style={{ animationDelay: `${i * 80}ms` }}>
               <div className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-surface-2 text-primary mb-4">
                 <f.icon className="h-5 w-5" />
               </div>
@@ -116,7 +107,6 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Bottom CTA */}
       <section className="container pb-20">
         <div className="ink-card p-12 md:p-20 text-center">
           <BookOpen className="h-10 w-10 mx-auto mb-6 text-accent" />

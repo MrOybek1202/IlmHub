@@ -8,7 +8,9 @@
  * whole UI is fully usable for design/demo.
  */
 
-export const API_URL = import.meta.env.VITE_API_URL as string | undefined;
+// Use empty string so requests are relative (e.g. /api/auth/...) and go through Vite proxy
+export const API_URL = "";
+const USE_BACKEND = true;
 
 export interface User {
   id: string;
@@ -57,7 +59,7 @@ function makeMockUser(email: string, name?: string): User {
 }
 
 async function http<T>(path: string, init?: RequestInit): Promise<T> {
-  if (!API_URL) throw new Error("API_URL not configured");
+  if (!USE_BACKEND) throw new Error("API_URL not configured");
   const token = localStorage.getItem(TOKEN_KEY);
   const res = await fetch(`${API_URL}${path}`, {
     ...init,
@@ -69,7 +71,16 @@ async function http<T>(path: string, init?: RequestInit): Promise<T> {
   });
   if (!res.ok) {
     const text = await res.text().catch(() => "");
-    throw new Error(text || `Request failed: ${res.status}`);
+    try {
+      const parsed = text ? JSON.parse(text) : null;
+      const message =
+        parsed?.message ||
+        parsed?.error?.message ||
+        (typeof parsed?.error === "string" ? parsed.error : "");
+      throw new Error(message || `Request failed: ${res.status}`);
+    } catch {
+      throw new Error(text || `Request failed: ${res.status}`);
+    }
   }
   return res.json() as Promise<T>;
 }
@@ -77,10 +88,15 @@ async function http<T>(path: string, init?: RequestInit): Promise<T> {
 export const api = {
   // ---------------- Auth ----------------
   async signin(email: string, _password: string): Promise<AuthResult> {
-    if (API_URL) return http<AuthResult>("/api/auth/signin", {
-      method: "POST",
-      body: JSON.stringify({ email, password: _password }),
-    });
+    if (USE_BACKEND) {
+      const res = await http<AuthResult>("/api/auth/signin", {
+        method: "POST",
+        body: JSON.stringify({ email, password: _password }),
+      });
+      saveMockUser(res.user);
+      localStorage.setItem(TOKEN_KEY, res.token);
+      return res;
+    }
     const user = loadMockUser() ?? makeMockUser(email);
     saveMockUser(user);
     const token = "mock-token";
@@ -89,10 +105,15 @@ export const api = {
   },
 
   async signup(email: string, _password: string, name: string): Promise<AuthResult> {
-    if (API_URL) return http<AuthResult>("/api/auth/signup", {
-      method: "POST",
-      body: JSON.stringify({ email, password: _password, name }),
-    });
+    if (USE_BACKEND) {
+      const res = await http<AuthResult>("/api/auth/signup", {
+        method: "POST",
+        body: JSON.stringify({ email, password: _password, name }),
+      });
+      saveMockUser(res.user);
+      localStorage.setItem(TOKEN_KEY, res.token);
+      return res;
+    }
     const user = makeMockUser(email, name);
     saveMockUser(user);
     const token = "mock-token";
@@ -101,10 +122,15 @@ export const api = {
   },
 
   async google(idToken: string): Promise<AuthResult> {
-    if (API_URL) return http<AuthResult>("/api/auth/google", {
-      method: "POST",
-      body: JSON.stringify({ idToken }),
-    });
+    if (USE_BACKEND) {
+      const res = await http<AuthResult>("/api/auth/google", {
+        method: "POST",
+        body: JSON.stringify({ idToken }),
+      });
+      saveMockUser(res.user);
+      localStorage.setItem(TOKEN_KEY, res.token);
+      return res;
+    }
     const user = loadMockUser() ?? makeMockUser("google.user@ilm.uz", "Google User");
     saveMockUser(user);
     localStorage.setItem(TOKEN_KEY, "mock-token");
@@ -112,25 +138,24 @@ export const api = {
   },
 
   async sendCode(email: string): Promise<{ ok: true }> {
-    if (API_URL) return http("/api/auth/send-code", {
+    if (USE_BACKEND) return http("/api/auth/send-code", {
       method: "POST",
       body: JSON.stringify({ email }),
     });
-    // mock — always 123456
-    console.info("[mock] verification code is 123456 for", email);
+    console.info("[mock] verification code is mock for", email);
     return { ok: true };
   },
 
   async verifyCode(email: string, code: string): Promise<{ ok: boolean }> {
-    if (API_URL) return http("/api/auth/verify-code", {
+    if (USE_BACKEND) return http("/api/auth/verify-code", {
       method: "POST",
       body: JSON.stringify({ email, code }),
     });
-    return { ok: code === "123456" };
+    return { ok: code.length === 6 };
   },
 
   async resetPassword(email: string, code: string, newPassword: string) {
-    if (API_URL) return http("/api/auth/reset-password", {
+    if (USE_BACKEND) return http("/api/auth/reset-password", {
       method: "POST",
       body: JSON.stringify({ email, code, newPassword }),
     });
@@ -139,17 +164,13 @@ export const api = {
 
   // ---------------- Profile ----------------
   async me(): Promise<User | null> {
-    if (API_URL) {
-      try { return await http<User>("/api/users/me"); } catch { return null; }
-    }
+    // Bypassing backend for profile per user request
+    return loadMockUser();
     return loadMockUser();
   },
 
   async updateProfile(patch: Partial<User>): Promise<User> {
-    if (API_URL) return http<User>("/api/users/me", {
-      method: "PATCH",
-      body: JSON.stringify(patch),
-    });
+    // Bypassing backend for profile per user request
     const current = loadMockUser();
     if (!current) throw new Error("Not authenticated");
     const next = { ...current, ...patch };

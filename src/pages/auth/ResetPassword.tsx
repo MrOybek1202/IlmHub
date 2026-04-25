@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2 } from "lucide-react";
+import { Loader2, Eye, EyeOff } from "lucide-react";
 
 export default function ResetPassword() {
   const { t } = useI18n();
@@ -16,10 +16,11 @@ export default function ResetPassword() {
   const navigate = useNavigate();
 
   const [step, setStep] = useState<"email" | "code">("email");
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(() => new URLSearchParams(window.location.search).get("email") || "");
   const [code, setCode] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   async function sendCode(e: React.FormEvent) {
     e.preventDefault();
@@ -27,9 +28,9 @@ export default function ResetPassword() {
     try {
       await api.sendCode(email);
       setStep("code");
-      toast({ title: t("auth.code.sent") });
+      toast({ title: t("toast.success"), description: t("auth.code.sent") });
     } catch (err: any) {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
+      toast({ title: t("toast.error"), description: err.message, variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -40,10 +41,10 @@ export default function ResetPassword() {
     setLoading(true);
     try {
       await api.resetPassword(email, code, newPassword);
-      toast({ title: "✓" });
+      toast({ title: t("toast.success"), description: t("auth.reset.success") });
       navigate("/auth/signin");
     } catch (err: any) {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
+      toast({ title: t("toast.error"), description: err.message, variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -55,7 +56,7 @@ export default function ResetPassword() {
       subtitle={step === "email" ? t("auth.reset.desc") : `${t("auth.code.sent")} (${email})`}
       footer={
         <Link to="/auth/signin" className="text-primary hover:underline">
-          ← {t("cta.login")}
+          {t("common.back")}
         </Link>
       }
     >
@@ -66,7 +67,7 @@ export default function ResetPassword() {
             <Input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
           </div>
           <Button type="submit" disabled={loading} className="w-full bg-primary text-primary-foreground hover:bg-primary-soft rounded-full h-11">
-            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : t("common.next")}
+            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : t("cta.sendCode")}
           </Button>
         </form>
       ) : (
@@ -81,13 +82,18 @@ export default function ResetPassword() {
             </InputOTP>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="np">{t("auth.password")}</Label>
-            <Input id="np" type="password" required minLength={6} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
+            <Label htmlFor="np">{t("auth.reset.newPassword")}</Label>
+            <div className="relative">
+              <Input id="np" type={showPassword ? "text" : "password"} required minLength={6} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
+              <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
           </div>
           <Button type="submit" disabled={loading || code.length !== 6} className="w-full bg-primary text-primary-foreground hover:bg-primary-soft rounded-full h-11">
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : t("auth.code.verify")}
           </Button>
-          <p className="text-center text-xs text-muted-foreground">(mock: 123456)</p>
+          <p className="text-center text-xs text-muted-foreground">{t("auth.check.email")}</p>
         </form>
       )}
     </AuthShell>

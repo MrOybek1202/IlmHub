@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useGoogleLogin } from "@react-oauth/google";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/lib/i18n/I18nProvider";
@@ -9,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2 } from "lucide-react";
+import { Loader2, Eye, EyeOff } from "lucide-react";
 
 export default function SignUp() {
   const { t } = useI18n();
@@ -23,6 +24,7 @@ export default function SignUp() {
   const [password, setPassword] = useState("");
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   async function onSubmitForm(e: React.FormEvent) {
     e.preventDefault();
@@ -32,7 +34,7 @@ export default function SignUp() {
       setStep("verify");
       toast({ title: t("auth.code.sent") });
     } catch (err: any) {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
+      toast({ title: t("toast.error"), description: err.message, variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -44,26 +46,35 @@ export default function SignUp() {
     setLoading(true);
     try {
       const r = await api.verifyCode(email, code);
-      if (!r.ok) throw new Error("Invalid code");
+      if (!r.ok) throw new Error(t("auth.invalidCode"));
       await signup(email, password, name);
       navigate("/onboarding");
     } catch (err: any) {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
+      toast({ title: t("toast.error"), description: err.message, variant: "destructive" });
     } finally {
       setLoading(false);
     }
   }
 
-  async function onGoogle() {
-    setLoading(true);
-    try {
-      await signinGoogle("mock-google-id-token");
-      navigate("/onboarding");
-    } catch (err: any) {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
-    } finally {
-      setLoading(false);
+  const googleLogin = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      setLoading(true);
+      try {
+        await signinGoogle(tokenResponse.access_token);
+        navigate("/onboarding");
+      } catch (err: any) {
+        toast({ title: t("toast.error"), description: err.message, variant: "destructive" });
+      } finally {
+        setLoading(false);
+      }
+    },
+    onError: () => {
+      toast({ title: t("toast.error"), description: t("auth.google.failed"), variant: "destructive" });
     }
+  });
+
+  async function onGoogle() {
+    googleLogin();
   }
 
   return (
@@ -90,15 +101,20 @@ export default function SignUp() {
           <form onSubmit={onSubmitForm} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="name">{t("auth.name")}</Label>
-              <Input id="name" required value={name} onChange={(e) => setName(e.target.value)} placeholder="Oybek Karimjonov" />
+              <Input id="name" required value={name} onChange={(e) => setName(e.target.value)} placeholder={t("auth.name.placeholder")} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">{t("auth.email")}</Label>
-              <Input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@ilm.uz" />
+              <Input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder={t("auth.email.placeholder")} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">{t("auth.password")}</Label>
-              <Input id="password" type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} />
+              <div className="relative">
+                <Input id="password" type={showPassword ? "text" : "password"} required value={password} onChange={(e) => setPassword(e.target.value)} />
+                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
             </div>
             <Button type="submit" disabled={loading} className="w-full bg-primary text-primary-foreground hover:bg-primary-soft rounded-full h-11">
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : t("cta.signup")}
@@ -130,7 +146,7 @@ export default function SignUp() {
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : t("auth.code.verify")}
           </Button>
           <p className="text-center text-xs text-muted-foreground">
-            (mock: 123456)
+            {t("auth.check.email")}
           </p>
         </form>
       )}

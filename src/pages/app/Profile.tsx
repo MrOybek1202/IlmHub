@@ -23,9 +23,9 @@ export default function Profile() {
           <div>
             <h2 className="font-serif text-2xl font-semibold">{user?.name}</h2>
             <p className="text-muted-foreground text-sm">{user?.email}</p>
-            <div className="flex gap-2 mt-3">
-              <span className="pill">Grade {user?.grade}</span>
-              <span className="pill">{user?.goal}</span>
+            <div className="flex gap-2 mt-3 flex-wrap">
+              {user?.grade ? <span className="pill">{t("profile.grade")} {user.grade}</span> : null}
+              {user?.goal ? <span className="pill">{t(`goal.${user.goal}`)}</span> : null}
             </div>
           </div>
         </div>

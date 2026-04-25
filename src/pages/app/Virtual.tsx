@@ -4,6 +4,7 @@ import { Atom, Sparkles } from "lucide-react";
 
 export default function Virtual() {
   const { t } = useI18n();
+
   return (
     <div className="container py-8">
       <PageHeader title={t("vr.title")} desc={t("vr.desc")} />

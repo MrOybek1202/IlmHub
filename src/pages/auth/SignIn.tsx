@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useGoogleLogin } from "@react-oauth/google";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/lib/i18n/I18nProvider";
@@ -7,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2 } from "lucide-react";
+import { Loader2, Eye, EyeOff } from "lucide-react";
 
 export default function SignIn() {
   const { t } = useI18n();
@@ -17,6 +18,7 @@ export default function SignIn() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -25,22 +27,31 @@ export default function SignIn() {
       await signin(email, password);
       navigate("/app");
     } catch (err: any) {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
+      toast({ title: t("toast.error"), description: err.message, variant: "destructive" });
     } finally {
       setLoading(false);
     }
   }
 
-  async function onGoogle() {
-    setLoading(true);
-    try {
-      await signinGoogle("mock-google-id-token");
-      navigate("/app");
-    } catch (err: any) {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
-    } finally {
-      setLoading(false);
+  const googleLogin = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      setLoading(true);
+      try {
+        await signinGoogle(tokenResponse.access_token);
+        navigate("/app");
+      } catch (err: any) {
+        toast({ title: t("toast.error"), description: err.message, variant: "destructive" });
+      } finally {
+        setLoading(false);
+      }
+    },
+    onError: () => {
+      toast({ title: t("toast.error"), description: t("auth.google.failed"), variant: "destructive" });
     }
+  });
+
+  async function onGoogle() {
+    googleLogin();
   }
 
   return (
@@ -58,14 +69,19 @@ export default function SignIn() {
       <form onSubmit={onSubmit} className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="email">{t("auth.email")}</Label>
-          <Input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@ilm.uz" />
+          <Input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder={t("auth.email.placeholder")} />
         </div>
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <Label htmlFor="password">{t("auth.password")}</Label>
-            <Link to="/auth/reset" className="text-xs text-primary hover:underline">{t("auth.forgot")}</Link>
+            <Link to={`/auth/reset?email=${encodeURIComponent(email)}`} className="text-xs text-primary hover:underline">{t("auth.forgot")}</Link>
           </div>
-          <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
+          <div className="relative">
+            <Input id="password" type={showPassword ? "text" : "password"} required value={password} onChange={(e) => setPassword(e.target.value)} />
+            <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
+              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          </div>
         </div>
         <Button type="submit" disabled={loading} className="w-full bg-primary text-primary-foreground hover:bg-primary-soft rounded-full h-11">
           {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : t("cta.login")}
